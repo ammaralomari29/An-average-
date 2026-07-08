@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة المعدل الجامعي الذكية</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .action-area {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .btn-add {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .subjects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .subject-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .grade-badge {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            min-width: 80px;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        /* الألوان الخاصة بالتقديرات */
+        .grade-fail { background-color: #fee2e2; color: #ef4444; }
+        .grade-pass { background-color: #fef3c7; color: #d97706; }
+        .grade-good { background-color: #e0f2fe; color: #0284c7; }
+        .grade-verygood { background-color: #e0e7ff; color: #4f46e5; }
+        .grade-excellent { background-color: #dcfce7; color: #16a34a; }
+
+        .results-panel {
+            background: #eef2ff;
+            border: 2px dashed var(--primary-color);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-item {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .result-item span {
+            color: var(--primary-color);
+            font-size: 22px;
+        }
+
+        @media (max-width: 600px) {
+            .subject-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .btn-delete {
+                text-align: center;
+                background: var(--danger-color);
+                color: white;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>حاسبة المعدل الجامعي الذكية</h1>
+        <p>قم بإدخال موادك الدراسية وسيتم حساب معدلك وتقديرك فورياً</p>
+    </header>
+
+    <div class="action-area">
+        <button class="btn-add" onclick="addSubjectRow()">+ إضافة مادة جديدة</button>
+    </div>
+
+    <div class="subjects-list" id="subjectsContainer">
+        </div>
+
+    <div class="results-panel">
+        <div class="result-item">المعدل العام: <span id="finalGPA">0.00</span></div>
+        <div class="result-item">التقدير العام: <span id="finalRating">-</span></div>
+    </div>
+</div>
+
+<script>
+    const container = document.getElementById('subjectsContainer');
+
+    // دالة لتحديد التقدير واللون بناءً على العلامة
+    function getGradeDetails(score) {
+        if (score === '' || isNaN(score)) return { text: '-', class: '' };
+        if (score < 50) return { text: 'راسب', class: 'grade-fail' };
+        if (score >= 50 && score < 68) return { text: 'مقبول', class: 'grade-pass' };
+        if (score >= 68 && score < 76) return { text: 'جيد', class: 'grade-good' };
+        if (score >= 76 && score < 84) return { text: 'جيد جداً', class: 'grade-verygood' };
+        if (score >= 84 && score <= 100) return { text: 'امتياز', class: 'grade-excellent' };
+        return { text: '-', class: '' };
+    }
+
+    // دالة لإنشاء سطر مادة جديد
+    function addSubjectRow() {
+        const row = document.createElement('div');
+        row.className = 'subject-row';
+        
+        row.innerHTML = `
+            <div class="input-group">
+                <label>اسم المادة</label>
+                <input type="text" placeholder="مثال: رياضيات">
+            </div>
+            <div class="input-group">
+                <label>عدد الساعات</label>
+                <input type="number" class="hours-input" min="1" placeholder="0" oninput="calculateTotalGPA()">
+            </div>
+            <div class="input-group">
+                <label>العلامة</label>
+                <input type="number" class="score-input" min="0" max="100" placeholder="0" oninput="updateRowGrade(this); calculateTotalGPA()">
+            </div>
+            <div class="input-group">
+                <label>تقدير المادة</label>
+                <div class="grade-badge">-</div>
+            </div>
+            <button class="btn-delete" onclick="this.parentElement.remove(); calculateTotalGPA()">🗑️</button>
+        `;
+        
+        container.appendChild(row);
+    }
+
+    // تحديث تقدير المادة الحالية فورياً أثناء الكتابة
+    function updateRowGrade(input) {
+        const score = parseFloat(input.value);
+        const badge = input.parentElement.parentElement.querySelector('.grade-badge');
+        const details = getGradeDetails(score);
+        
+        badge.innerText = details.text;
+        badge.className = 'grade-badge ' + details.class;
+    }
+
+    // حساب المعدل الإجمالي والتقدير العام
+    function calculateTotalGPA() {
+        const rows = document.querySelectorAll('.subject-row');
+        let totalPoints = 0;
+        let totalHours = 0;
+
+        rows.forEach(row => {
+            const hoursInput = row.querySelector('.hours-input').value;
+            const scoreInput = row.querySelector('.score-input').value;
+
+            if (hoursInput && scoreInput && !isNaN(hoursInput) && !isNaN(scoreInput)) {
+                const hours = parseFloat(hoursInput);
+                const score = parseFloat(scoreInput);
+
+                totalPoints += (score * hours);
+                totalHours += hours;
+            }
+        });
+
+        const finalGPAElement = document.getElementById('finalGPA');
+        const finalRatingElement = document.getElementById('finalRating');
+
+        if (totalHours > 0) {
+            const finalGPA = totalPoints / totalHours;
+            finalGPAElement.innerText = finalGPA.toFixed(2);
+            
+            const ratingDetails = getGradeDetails(finalGPA);
+            finalRatingElement.innerText = ratingDetails.text;
+            // تغيير لون نص التقدير العام ليتناسب مع النتيجة
+            finalRatingElement.style.color = window.getComputedStyle(document.createElement('span')).color; 
+        } else {
+            finalGPAElement.innerText = '0.00';
+            finalRatingElement.innerText = '-';
+        }
+    }
+
+    // إنشاء الـ 4 خانات الأساسية عند تحميل الموقع لأول مرة
+    window.onload = function() {
+        for (let i = 0; i < 4; i++) {
+            addSubjectRow();
+        }
+    };
+</script>
+
+</body>
+</html>
